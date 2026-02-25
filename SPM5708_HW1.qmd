@@ -1,0 +1,163 @@
+---
+title: "SPM5708_HW1"
+author: "Jared Roderick"
+format: 
+  html:
+    self-contained: true
+    toc: false
+    toc-location: left
+    toc-depth: 2
+editor: visual
+---
+
+## SPM5708 HW1
+
+I chose to create data visuals and draw conclusions from the Track_Combo.csv data set on collegiate baseball data.
+
+```{r}
+# Load the libraries
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+# Load the data
+setwd("/Users/jrod/Education/FSU/SPM5708/Data")
+data <- read.csv("Track_Combo.csv")
+```
+
+## Inference 1 : Pitcher 10023185 Velocity by Pitch Type
+
+```{r}
+# Filter the data for PitcherId 10023185
+inf1_pitching_data <- data %>% filter(PitcherId == "10023185")
+
+# Create a box plot of the pitch velocities separated by pitch type
+velocity_by_type_boxplot <- ggplot(inf1_pitching_data, aes(x = TaggedPitchType, y = RelSpeed)) + geom_boxplot() + labs(title = 'PitcherId 10023185: Pitch Type vs Velocity (mph)') + theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(velocity_by_type_boxplot)
+
+```
+
+```{r}
+# Now I want to isolate pitches that resulted in a strike throughout the enitre dataset to see if there is any overlap or trend
+
+# Filter the data for PitchCall = StrikeCalled or StrikeSwinging or FoulBall
+strikes_pitching_data <- data %>% filter(PitchCall == "StrikeCalled" |PitchCall == "StrikeSwinging" | PitchCall == "FoulBall")
+
+# Create a box plot of the pitch velocities separated by pitch type
+strikes_velocity_by_type_boxplot <- ggplot(strikes_pitching_data, aes(x = TaggedPitchType, y = RelSpeed)) + geom_boxplot() + labs(title = 'PitcherId 10023185: Pitch Type vs Velocity (mph)') + theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(strikes_velocity_by_type_boxplot)
+```
+
+The box and whiskers plot above separates PitcherId 10023185's pitches into the following splits: ChangeUp, Curveball, Fastball, and Slider. Then for each category, it creates a box representing the IQR (middle 50 percentile) of that respective pitch's speeds, with the whiskers representing the minimum-25%, and 75%-maximum and the dots representing outliers. For the ChangeUp, we see a very short box meaning that this pitch was thrown with a very short range of differing speeds. A majority of the time, the changeup clocked in around 79-82 mph, with the median coming around 80 mph. We see a similar trend for both the curveball and fastball, as well. A majority of the curveballs were clocked in between 73-75 mph with the median being roughly 74 mph. A majority of the fastballs were clocked in between 86-87.5 mph with the median falling around 87 mph. However, we do notice that there are 2 outliers in which his fastball was thrown at around 75 mph and 81 mph. Lastly, his slider came in at a wide range of speeds, with the middle 50 percentile of pitches getting measured between 75-81 mph. If we wanted to compare this to the rest fo the league, we can see that Pitcher 10023185's changeup falls around the 25-50th percentile for speed of changeups resulting in a strike. Pitcher 10023185's curveball also falls around the 25-50th percentile for speed of curveballs resulting in a strike. Pitcher 10023185's fastball falls around the 12.5-25th percentile for speed of fastballs resulting in a strike. Lastly, Pitcher 10023185's slider falls around the 5-30th percentile for speed of sliders resulting in a strike.
+
+## Inference 2 : Batter 8886045 Launch Angle vs Exit Velocity
+
+```{r}
+# Filter the data for BatterID 8886045
+inf2_batting_data <- data %>% filter(BatterId == "8886045")
+```
+
+```{r}
+# Create a scatter plot with a GAM for Launch Angle vs Exit Velocity
+launch_exit_scatterplot <- ggplot(inf2_batting_data, aes(x = ExitSpeed, y = Angle, color = PlayResult)) + geom_point(alpha = .75) + scale_color_manual(values = c('Single' = 'red', 'Double' = 'dodgerblue', 'Triple' = 'purple', 'HomeRun' = 'green', 'Error' = 'grey', 'Out' = 'black', 'Undefined' = 'white', 'FieldersChoice' = 'pink', 'Sacrifice' = 'darkgreen')) + geom_smooth(method = 'gam', se = FALSE, color = 'black') + labs(title = 'Batter 8886045 : Launch Angle vs Exit Velo', x = 'Exit Velo (mph)', y = 'Launch Angle (degrees)') + theme_minimal()
+print(launch_exit_scatterplot)
+```
+
+```{r}
+# Run this for all of the batters
+# Create a scatter plot with a GAM for Launch Angle vs Exit Velocity
+total_launch_exit_scatterplot <- ggplot(data, aes(x = ExitSpeed, y = Angle, color = PlayResult)) + geom_point(alpha = .75) + scale_color_manual(values = c('Single' = 'red', 'Double' = 'dodgerblue', 'Triple' = 'purple', 'HomeRun' = 'green', 'Error' = 'grey', 'Out' = 'black', 'Undefined' = 'white', 'FieldersChoice' = 'pink', 'Sacrifice' = 'darkgreen')) + geom_smooth(method = 'gam', se = FALSE, color = 'black') + labs(title = 'All Batters : Launch Angle vs Exit Velo', x = 'Exit Velo (mph)', y = 'Launch Angle (degrees)') + theme_minimal()
+print(total_launch_exit_scatterplot)
+```
+
+```{r}
+# Lastly, I decided to filter out only XBH
+# Filter the data for PlayResult = 'Double', 'Triple', or 'HomeRun' (Essentially, this is saying: Given that a player got an XBH, what was his Exit Velo / Launch Angle)
+xbh_batting_data <- data %>% filter(PlayResult == "Double" | PlayResult == "Triple" | PlayResult == "HomeRun")
+```
+
+```{r}
+# Create a scatter plot with a GAM for Launch Angle vs Exit Velocity
+xbh_launch_exit_scatterplot <- ggplot(xbh_batting_data, aes(x = ExitSpeed, y = Angle, color = PlayResult)) + geom_point(alpha = .75) + scale_color_manual(values = c('Double' = 'dodgerblue', 'Triple' = 'purple', 'HomeRun' = 'green')) + geom_smooth(method = 'gam', se = FALSE, color = 'black') + labs(title = 'All Batters : Launch Angle vs Exit Velo', x = 'Exit Velo (mph)', y = 'Launch Angle (degrees)') + theme_minimal()
+print(xbh_launch_exit_scatterplot)
+```
+
+I created a scatter plot with a generalized additive model regression line using the data from BatterID 8886045. On the y-axis, I am tracking Launch Angle and comparing it to Exit Velocity on the x-axis. Some of the data points were labeled as "Undecided". I am not sure if this was to resemble foul balls, or if there was an error in the tracking, but regardless I whited-out these data points since we are not aware of the actual outcome. I also color-coded the known outcomes, separated by singles, doubles, triples, home runs, ROE, and outs. The GAM regression line gives us the overall trend of the data without needing any parametric assumptions. After looking at BatterID 8886045's outcomes, I decided to expand this to the entire data set to look for a common trend. Lastly, I transitioned my focus to only include data points that resulted in an extra base hit, since that could be a realistic approach for a coach - to increase extra base hits. After doing so, I noticed that there is a strong, positive relationship between exit velocity and launch angle from around (82.5 mph, 95 mph) and (-2.5º, 22º). The tighter range from (92.5 mph, 95 mph) and (19º, 22º) seems to resemble the optimal swing pattern until diminishing or even negative returns are noticed. Depedning on a coach's focus, we see that a majority of the home runs hit fall above the 22º swing path; however, if we look at the entire batter data, we can see that isolating to swings with a launch angle greater than 22º results in a sacrifice or an out more often than it does a home run.
+
+## Inference 3 : Pitcher 1000036206 Evaluation via Heat Map
+
+For my first observation, I am going to create a heat map for PitcherID 1000036206.
+
+```{r}
+# Filter the data for PitcherID 1000036206
+inf3_pitching_data <- data %>% filter(PitcherId == "1000036206")
+
+# Create a pitch location heat map
+inf3_pitch_location_heatmap <- ggplot(inf3_pitching_data, aes(x = PlateLocSide, y = PlateLocHeight)) + stat_density_2d(aes(fill = ..density..), geom = 'tile', contour = FALSE, bins = 50) + scale_fill_gradientn(colors = c('white', 'yellow', 'red', 'darkred')) + geom_rect(aes(xmin = -.7, xmax = .7, ymin = 1.5, ymax = 3.5), fill = NA, color = 'black', linetype = 'dashed', size = 1) + labs(title = 'PitcherID 1000036206: Pitch Location Heat Map', x = 'Horizontal Location (ft)', y = 'Vertical Location (ft)') + theme_minimal() + coord_fixed(ratio = 1)
+
+# Plot the pitch location heat map
+print(inf3_pitch_location_heatmap)
+```
+
+After noticing that a majority of the pitches thrown landed in the bottom left corner of the strike zone, I decided to break this up to see where each pitch tended to fall.
+
+```{r}
+# First, I need to check what pitches PitcherID 1000036206 throws
+unique(data$TaggedPitchType[data$PitcherId == '1000036206'])
+```
+
+```{r}
+# Now I can copy the code from the heat map above while distinguishing the 3 pitch types
+# Slider
+# Filter the data for PitcherID 1000036206 sliders
+slider_pitching_data <- data %>% filter(PitcherId == "1000036206", TaggedPitchType == 'Slider')
+
+# Create a pitch location heat map
+slider_pitch_location_heatmap <- ggplot(slider_pitching_data, aes(x = PlateLocSide, y = PlateLocHeight)) + stat_density_2d(aes(fill = ..density..), geom = 'tile', contour = FALSE, bins = 50) + scale_fill_gradientn(colors = c('white', 'yellow', 'red', 'darkred')) + geom_rect(aes(xmin = -.7, xmax = .7, ymin = 1.5, ymax = 3.5), fill = NA, color = 'black', linetype = 'dashed', size = 1) + labs(title = 'PitcherID 1000036206: Slider Location Heat Map', x = 'Horizontal Location (ft)', y = 'Vertical Location (ft)') + theme_minimal() + coord_fixed(ratio = 1)
+
+# Plot the pitch location heat map
+print(slider_pitch_location_heatmap)
+```
+
+```{r}
+# Fastball
+# Filter the data for PitcherID 1000036206 fastballs
+fastball_pitching_data <- data %>% filter(PitcherId == "1000036206", TaggedPitchType == 'Fastball')
+
+# Create a pitch location heat map
+fastball_pitch_location_heatmap <- ggplot(fastball_pitching_data, aes(x = PlateLocSide, y = PlateLocHeight)) + stat_density_2d(aes(fill = ..density..), geom = 'tile', contour = FALSE, bins = 50) + scale_fill_gradientn(colors = c('white', 'yellow', 'red', 'darkred')) + geom_rect(aes(xmin = -.7, xmax = .7, ymin = 1.5, ymax = 3.5), fill = NA, color = 'black', linetype = 'dashed', size = 1) + labs(title = 'PitcherID 1000036206: Fastball Location Heat Map', x = 'Horizontal Location (ft)', y = 'Vertical Location (ft)') + theme_minimal() + coord_fixed(ratio = 1)
+
+# Plot the pitch location heat map
+print(fastball_pitch_location_heatmap)
+```
+
+```{r}
+# Changeup
+# Filter the data for PitcherID 1000036206 changeups
+changeup_pitching_data <- data %>% filter(PitcherId == "1000036206", TaggedPitchType == 'ChangeUp')
+
+# Create a pitch location heat map
+changeup_pitch_location_heatmap <- ggplot(changeup_pitching_data, aes(x = PlateLocSide, y = PlateLocHeight)) + stat_density_2d(aes(fill = ..density..), geom = 'tile', contour = FALSE, bins = 50) + scale_fill_gradientn(colors = c('white', 'yellow', 'red', 'darkred')) + geom_rect(aes(xmin = -.7, xmax = .7, ymin = 1.5, ymax = 3.5), fill = NA, color = 'black', linetype = 'dashed', size = 1) + labs(title = 'PitcherID 1000036206: Changeup Location Heat Map', x = 'Horizontal Location (ft)', y = 'Vertical Location (ft)') + theme_minimal() + coord_fixed(ratio = 1)
+
+# Plot the pitch location heat map
+print(changeup_pitch_location_heatmap)
+```
+
+Just out of curiosity, I also am going to check the frequency of each pitch to make sure there is a respectable sample size.
+
+```{r}
+# Sliders
+num_sliders <-sum(data$PitcherId == '1000036206' & data$TaggedPitchType == "Slider")
+cat("PitcherId 1000036206 threw", num_sliders, 'sliders \n')
+# Fastballs
+num_fastballs <-sum(data$PitcherId == '1000036206' & data$TaggedPitchType == "Fastball")
+cat("PitcherId 1000036206 threw", num_fastballs, 'fastballs \n')
+# ChangeUps
+num_changeups <-sum(data$PitcherId == '1000036206' & data$TaggedPitchType == "ChangeUp")
+cat("PitcherId 1000036206 threw", num_changeups, 'changeups \n')
+```
+
+I created a heat map for PitcherID 1000036206's pitches. Areas that are colored in to be darker red represent locations where the pitch is more frequently thrown while locations that are lighter yellow represent less dense spots. When evaluating PitcherID 1000036206, I noticed that this pitcher seems to keep his pitches (specifically the slider and changeup) in the ideal part of the zone. Thus, if a batter is able to read the spin and laces of the pitches coming in and identifies it as a slider, they can most likely predict that the slider will finish in the low and away section of the strike zone unless it is left hanging. On the other hand, if the laces are spinning similarly to that of a changeup, it appears that the pitch may result in a ball more often than not, so it may be more successful to let the pitch go with the alternate mindset of fouling it off in emergencies. Lastly, we can see that PitcherID 1000036206 favors to throwing his fastball inside to a righty and outside to a lefty, but with a lot more variation. \*\*\*Note: This graph is meant to represent the directional POV of a pitcher, not a batter.
